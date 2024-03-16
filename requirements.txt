@@ -1,6 +1,4 @@
 fastapi
 ray[serve]
 boto3
-duckdb
-pandas
 rdkit

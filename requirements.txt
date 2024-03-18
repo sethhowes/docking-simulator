@@ -1,4 +1,4 @@
-fastapi
 ray[serve]
 boto3
 rdkit
+selfies

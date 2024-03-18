@@ -1,20 +1,24 @@
-FROM rayproject/ray-ml:2.6.3-gpu
+# Use the official Ubuntu 20.04 base image
+FROM rayproject/ray:2.9.3-py39-cu118
 
-RUN apt-get update && apt install -y cmake \
-    libboost-system-dev libboost-thread-dev libboost-serialization-dev \
-    libboost-filesystem-dev libboost-program-options-dev libboost-timer-dev \
-    libsm6 \
-    wget \
-    openbabel \
-    apt git python3-pip && \
-    ln -s /usr/bin/python3 /usr/bin/python
+# Set environment variable to non-interactive (this prevents some prompts)
+ENV DEBIAN_FRONTEND=noninteractive
+USER root
 
-# Install uni-dock
-RUN cd opt && \
+# Update package list and install required dependencies
+RUN apt-get update \
+    && apt-get install -y libboost-system-dev libboost-thread-dev \
+    libboost-serialization-dev libboost-filesystem-dev \
+    libboost-program-options-dev libboost-timer-dev \
+    wget openbabel \
+    git python3-pip
+
+# Install Uni-Dock binary
+RUN cd /opt && \
     wget https://github.com/dptech-corp/Uni-Dock/releases/download/1.0.0/unidock && \
     chmod +x unidock
 
-# Ensure binaries are in path
+# Ensure Uni-Dock binary is in path
 ENV PATH="/opt:${PATH}"
 
 # Install UniDockTools
@@ -24,10 +28,13 @@ RUN pip install git+https://github.com/dptech-corp/Uni-Dock.git#subdirectory=uni
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# # Copy source folder into app folder
-# COPY ./src /app/src
+WORKDIR /app/src/
 
-# # Create an output directory
-# RUN mkdir ./data
+# Copy source folder into app folder
+COPY ./src /app/src
 
-# # Move into app folder
+# Create an output directory
+RUN mkdir ./data
+
+# Run ray serve
+CMD ["serve", "run", "-p", "1456", "docking-simulator.unidock:docking_app"]
